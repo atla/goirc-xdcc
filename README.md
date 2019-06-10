@@ -6,14 +6,17 @@ Usage:
 
 You can either use the xdcc package as an addon to the Connection class of fluffle/goirc and add xdcc capabilities like that:
 
-`	xdcc := xdcc.New(bot.conn)
-  xdcc.GetXdcc(pack.Host, fmt.Sprintf("xdcc send #%d", pack.PackageID), "./downloads/")
+`
+xdcc := xdcc.New(bot.conn)
+
+xdcc.GetXdcc(pack.Host, fmt.Sprintf("xdcc send #%d", pack.PackageID), "./downloads/")
   `
 
 
 or you can use the convenience bot package that makes use of fluffle/goirc and the xdcc package to automate file downloads by providing an easy to use interface:
 
 `
+
 import "github.com/atla/goirc-xdcc/bot"
 
 func main() {
