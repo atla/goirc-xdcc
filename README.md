@@ -36,3 +36,9 @@ func main() {
 
 }
 ```
+
+Future updates planned:
+
+- DCC Resume command
+- proper quitting of the bot after download
+- Percentage updates in form of an DownloadUpdate channel
