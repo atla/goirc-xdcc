@@ -95,6 +95,10 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 
 			bytesReadSum := int64(0)
 			buf := make([]byte, 0, 4*1024)
+
+			var lastPercentage float32
+			lastPercentage = 0.0
+
 			for {
 				n, err := con.Read(buf[:cap(buf)])
 				buf = buf[:n]
@@ -114,7 +118,14 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 
 				bytesReadSum += int64(len(buf))
 
-				xdcc.DownloadUpdates <- sendDownloadUpdate(bytesReadSum, details)
+				percentage := float32(bytesReadSum) / (float32(details.Length) / float32(100))
+
+				// don't flood the channel with messages
+				// only publish 0.1% updates
+				if (percentage - lastPercentage) > 0.1 {
+					lastPercentage = percentage
+					xdcc.DownloadUpdates <- sendDownloadUpdate(bytesReadSum, details)
+				}
 
 				if err != nil && err != io.EOF {
 					log.Fatal("Error reading dcc stream")
