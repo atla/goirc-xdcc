@@ -14,23 +14,38 @@ import (
 
 // XDCC xdcc structure
 type XDCC struct {
-	Conn *irc.Conn
+	Conn            *irc.Conn
+	DownloadUpdates chan *DownloadUpdate
 }
 
 // New creates a new xdcc client
 func New(conn *irc.Conn) *XDCC {
 	return &XDCC{
-		Conn: conn,
+		Conn:            conn,
+		DownloadUpdates: make(chan *DownloadUpdate, 10),
 	}
 }
 
-// Detail used to parse xdcc info
-type Detail struct {
-	Nick   string
-	File   string
-	IP     string
-	Port   uint32
-	Length int
+// DownloadUpdate is the message that is pushed during download progress
+type DownloadUpdate struct {
+	ID            string        `json:"id"`
+	PackageDetail PackageDetail `json:"packageDetail"`
+	Status        string        `json:"status"`
+	Percentage    float32       `json:"percentage"`
+}
+
+// PackageDetail used to parse xdcc info
+type PackageDetail struct {
+	Nick   string `json:"nick"`
+	File   string `json:"file"`
+	IP     string `json:"ip"`
+	Port   uint32 `json:"port"`
+	Length int64  `json:"length"`
+}
+
+// String prints a DownloadUpdate to commandline
+func (dl *DownloadUpdate) String() string {
+	return fmt.Sprintf("Download progress: %f", dl.Percentage)
 }
 
 // GetXdcc starts and handles an xdcc transfer
@@ -78,7 +93,7 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 
 			defer con.Close()
 
-			nr := int64(0)
+			bytesReadSum := int64(0)
 			buf := make([]byte, 0, 4*1024)
 			for {
 				n, err := con.Read(buf[:cap(buf)])
@@ -97,7 +112,9 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 					return
 				}
 
-				nr += int64(len(buf))
+				bytesReadSum += int64(len(buf))
+
+				xdcc.DownloadUpdates <- sendDownloadUpdate(bytesReadSum, details)
 
 				if err != nil && err != io.EOF {
 					log.Fatal("Error reading dcc stream")
@@ -105,11 +122,24 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 				}
 			}
 
-			log.WithField("bytes", nr).Info("Finished reading stream.")
+			log.WithField("bytes", bytesReadSum).Info("Finished reading stream.")
 		})
 
 	// send privmsg to trigger dcc send
 	xdcc.Conn.Privmsg(hostUser, hostCommand)
+}
+
+func sendDownloadUpdate(bytesReadSum int64, detail PackageDetail) *DownloadUpdate {
+
+	percentage := float32(bytesReadSum) / (float32(detail.Length) / float32(100))
+
+	return &DownloadUpdate{
+		ID:            "",
+		PackageDetail: detail,
+		Status:        "Downloading",
+		Percentage:    percentage,
+	}
+
 }
 
 func uint32ToIP(n int) string {
@@ -120,7 +150,7 @@ func uint32ToIP(n int) string {
 	return fmt.Sprintf("%d.%d.%d.%d", byte4, byte3, byte2, byte1)
 }
 
-func parseSendParams(text string) Detail {
+func parseSendParams(text string) PackageDetail {
 
 	parts := strings.Split(text, " ")
 	ip, _ := strconv.Atoi(parts[2])
@@ -129,10 +159,10 @@ func parseSendParams(text string) Detail {
 
 	ip3 := uint32ToIP(ip)
 
-	return Detail{
+	return PackageDetail{
 		File:   parts[1],
 		IP:     ip3,
 		Port:   uint32(port),
-		Length: int(length),
+		Length: int64(length),
 	}
 }

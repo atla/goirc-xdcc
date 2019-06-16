@@ -30,6 +30,14 @@ func New() *XdccBot {
 	}
 }
 
+func showDownloadUpdates(xdcc *xdcc.XDCC) {
+
+	for update := range xdcc.DownloadUpdates {
+		fmt.Println(update)
+	}
+
+}
+
 // Get retrieves a file via xdcc with the given package information
 func (bot *XdccBot) Get(pack Package) {
 
@@ -40,6 +48,9 @@ func (bot *XdccBot) Get(pack Package) {
 	bot.conn.Me().Ident = bot.nick
 
 	xdcc := xdcc.New(bot.conn)
+
+	go showDownloadUpdates(xdcc)
+
 	bot.conn.HandleFunc(irc.CONNECTED,
 		func(conn *irc.Conn, line *irc.Line) {
 
