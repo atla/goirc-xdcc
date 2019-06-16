@@ -1,6 +1,11 @@
 package main
 
-import "github.com/atla/goirc-xdcc/bot"
+import (
+	"fmt"
+
+	"github.com/atla/goirc-xdcc/bot"
+	"github.com/atla/goirc-xdcc/xdcc"
+)
 
 func main() {
 
@@ -13,6 +18,8 @@ func main() {
 		// sometimes there is a second channel that you have to connect to before bot will send you files
 		CompanionChannel: "#otherChannel",
 		PackageID:        42,
+	}, func(update *xdcc.DownloadUpdate) {
+		fmt.Printf("Update: %f", update.Percentage)
 	})
 
 }
