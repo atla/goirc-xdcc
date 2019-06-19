@@ -45,7 +45,7 @@ func (bot *XdccBot) Get(pack Package, updates func(*xdcc.DownloadUpdate)) {
 
 	client := xdcc.New(bot.conn)
 
-	fmt.Printf("Starting bot %s", bot.nick)
+	fmt.Printf("Starting bot %s\n", bot.nick)
 
 	if updates != nil {
 		go func() {
@@ -56,7 +56,7 @@ func (bot *XdccBot) Get(pack Package, updates func(*xdcc.DownloadUpdate)) {
 				if update.Status == xdcc.DownloadStatusDone {
 					bot.conn.Quit("may the 4th...")
 
-					fmt.Printf("Quitting bot %s", bot.nick)
+					fmt.Printf("Quitting bot %s\n", bot.nick)
 
 					// quit bot
 					quit <- true
