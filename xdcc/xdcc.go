@@ -134,6 +134,9 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 			}
 
 			log.WithField("bytes", bytesReadSum).Info("Finished reading stream.")
+
+			// send finished update
+			xdcc.DownloadUpdates <- sendDownloadComplete(bytesReadSum, details)
 		})
 
 	// send privmsg to trigger dcc send
@@ -150,7 +153,16 @@ func sendDownloadUpdate(bytesReadSum int64, detail PackageDetail) *DownloadUpdat
 		Status:        "Downloading",
 		Percentage:    percentage,
 	}
+}
 
+func sendDownloadComplete(bytesReadSum int64, detail PackageDetail) *DownloadUpdate {
+
+	return &DownloadUpdate{
+		ID:            "",
+		PackageDetail: detail,
+		Status:        "Done",
+		Percentage:    100.0,
+	}
 }
 
 func uint32ToIP(n int) string {
