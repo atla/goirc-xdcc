@@ -12,6 +12,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	// DownloadStatusStarted ...
+	DownloadStatusStarted = "Started"
+	// DownloadStatusDownloading ...
+	DownloadStatusDownloading = "Downloading"
+	// DownloadStatusDone ...
+	DownloadStatusDone = "Done"
+)
+
 // XDCC xdcc structure
 type XDCC struct {
 	Conn            *irc.Conn
@@ -99,6 +108,8 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 			var lastPercentage float32
 			lastPercentage = 0.0
 
+			xdcc.DownloadUpdates <- sendDownloadUpdate(0, details)
+
 			for {
 				n, err := con.Read(buf[:cap(buf)])
 				buf = buf[:n]
@@ -147,10 +158,17 @@ func sendDownloadUpdate(bytesReadSum int64, detail PackageDetail) *DownloadUpdat
 
 	percentage := float32(bytesReadSum) / (float32(detail.Length) / float32(100))
 
+	var status string
+	if bytesReadSum == 0 {
+		status = DownloadStatusStarted
+	} else {
+		status = DownloadStatusDownloading
+	}
+
 	return &DownloadUpdate{
 		ID:            "",
 		PackageDetail: detail,
-		Status:        "Downloading",
+		Status:        status,
 		Percentage:    percentage,
 	}
 }
@@ -160,7 +178,7 @@ func sendDownloadComplete(bytesReadSum int64, detail PackageDetail) *DownloadUpd
 	return &DownloadUpdate{
 		ID:            "",
 		PackageDetail: detail,
-		Status:        "Done",
+		Status:        DownloadStatusDone,
 		Percentage:    100.0,
 	}
 }

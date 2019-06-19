@@ -43,12 +43,24 @@ func (bot *XdccBot) Get(pack Package, updates func(*xdcc.DownloadUpdate)) {
 	bot.conn = irc.SimpleClient(bot.nick)
 	bot.conn.Me().Ident = bot.nick
 
-	xdcc := xdcc.New(bot.conn)
+	client := xdcc.New(bot.conn)
+
+	fmt.Printf("Starting bot %s", bot.nick)
 
 	if updates != nil {
 		go func() {
-			for update := range xdcc.DownloadUpdates {
+			for update := range client.DownloadUpdates {
+
 				updates(update)
+
+				if update.Status == xdcc.DownloadStatusDone {
+					bot.conn.Quit("may the 4th...")
+
+					fmt.Printf("Quitting bot %s", bot.nick)
+
+					// quit bot
+					quit <- true
+				}
 			}
 		}()
 	}
@@ -67,7 +79,7 @@ func (bot *XdccBot) Get(pack Package, updates func(*xdcc.DownloadUpdate)) {
 		func(conn *irc.Conn, line *irc.Line) {
 			if !bot.downloading && line.Args[0] == pack.Channel {
 				bot.downloading = true
-				xdcc.GetXdcc(pack.Host, fmt.Sprintf("xdcc send #%d", pack.PackageID), "./downloads/")
+				client.GetXdcc(pack.Host, fmt.Sprintf("xdcc send #%d", pack.PackageID), "./downloads/")
 			}
 		})
 
