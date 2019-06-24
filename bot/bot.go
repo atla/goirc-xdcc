@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/atla/goirc-xdcc/xdcc"
@@ -79,7 +80,14 @@ func (bot *XdccBot) Get(pack Package, updates func(*xdcc.DownloadUpdate)) {
 		func(conn *irc.Conn, line *irc.Line) {
 			if !bot.downloading && line.Args[0] == pack.Channel {
 				bot.downloading = true
-				client.GetXdcc(pack.Host, fmt.Sprintf("xdcc send #%d", pack.PackageID), "./downloads/")
+
+				downloadDirectory, exists := os.LookupEnv("DOWNLOAD_DIRECTORY")
+
+				if !exists {
+					downloadDirectory = "./downloads/"
+				}
+
+				client.GetXdcc(pack.Host, fmt.Sprintf("xdcc send #%d", pack.PackageID), downloadDirectory)
 			}
 		})
 
