@@ -142,6 +142,9 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 					log.Fatal("Error reading dcc stream")
 					return
 				}
+				if  float32(bytesReadSum)  == (float32(details.Length) {
+					break
+				}
 			}
 
 			log.WithField("bytes", bytesReadSum).Info("Finished reading stream.")
