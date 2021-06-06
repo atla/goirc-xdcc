@@ -142,6 +142,9 @@ func (xdcc *XDCC) GetXdcc(hostUser string, hostCommand string, path string) {
 					log.Fatal("Error reading dcc stream")
 					return
 				}
+				if  float32(bytesReadSum)  == (float32(details.Length) {
+					break
+				}
 			}
 
 			log.WithField("bytes", bytesReadSum).Info("Finished reading stream.")
@@ -193,15 +196,15 @@ func uint32ToIP(n int) string {
 
 func parseSendParams(text string) PackageDetail {
 
-	parts := strings.Split(text, " ")
-	ip, _ := strconv.Atoi(parts[2])
-	port, _ := strconv.Atoi(parts[3])
-	length, _ := strconv.Atoi(parts[4])
+	parts := strings.Split(strings.Split(text, `"`)[2], " ")
+	ip, _ := strconv.Atoi(parts[1])
+	port, _ := strconv.Atoi(parts[2])
+	length, _ := strconv.Atoi(parts[3])
 
 	ip3 := uint32ToIP(ip)
 
 	return PackageDetail{
-		File:   parts[1],
+		File:   strings.Split(text, `"`)[1],
 		IP:     ip3,
 		Port:   uint32(port),
 		Length: int64(length),
